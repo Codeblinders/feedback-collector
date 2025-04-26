@@ -1,90 +1,162 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import './FeedbackForm.css';
 
-function FeedbackForm({ onSubmitSuccess }) {
-  const [name, setName] = useState('');
+export default function FeedbackForm({ onSubmitSuccess }) {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const formRef = useRef(null);
 
-  const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
+
+
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess(false);
     setLoading(true);
 
-    if (!name || !email || !message) {
+    if (!firstName || !lastName || !email || !message) {
       setError('All fields are required');
       setLoading(false);
       return;
     }
 
     if (!validateEmail(email)) {
-      setError('Invalid email address');
+      setError('Please enter a valid email address');
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('https://your-backend-url/submit-feedback', {
+      const response = await fetch('https://feedback-collector-f0z4.onrender.com/submit-feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message, timestamp: new Date().toISOString() }),
+        body: JSON.stringify({ 
+          name: `${firstName} ${lastName}`, 
+          firstName, 
+          lastName,
+          email, 
+          message, 
+          timestamp: new Date().toISOString() 
+        }),
       });
 
       if (response.ok) {
-        setName('');
+        setFirstName('');
+        setLastName("")
         setEmail('');
         setMessage('');
+        setSuccess(true);
         onSubmitSuccess();
+        
+        
+        // Reset success message after 3 seconds
+        setTimeout(() => setSuccess(false), 3000);
       } else {
-        setError('Failed to submit feedback');
+        setError('Failed to submit feedback. Please try again.');
       }
     } catch (err) {
-      setError('An error occurred');
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">Submit Feedback</h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <div className="space-y-4">
-        <input
-          type="text"
-          placeholder="Full Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
-        <input
-          type="email"
-          placeholder="Email Address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
-        <textarea
-          placeholder="Your Feedback"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="w-full p-2 border rounded h-32"
-        ></textarea>
+    <div ref={formRef} className="form-container">
+      <h2 className="form-title">Share Your Thoughts</h2>
+      <p className="form-description">We value your feedback to help us improve</p>
+      
+      {error && (
+        <div className="message error-message">
+          <svg className="message-icon" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10s10-4.48,10-10S17.52,2,12,2z M13,17h-2v-2h2V17z M13,13h-2V7h2V13z"/>
+          </svg>
+          {error}
+        </div>
+      )}
+      
+      {success && (
+        <div className="message success-message">
+          <svg className="message-icon" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10s10-4.48,10-10S17.52,2,12,2z M10,17l-5-5l1.41-1.41L10,14.17l7.59-7.59L19,8l-9,9z"/>
+          </svg>
+          Thank you! Your feedback has been submitted successfully.
+        </div>
+      )}
+      
+      <form className="feedback-form" onSubmit={handleSubmit}>
+      <div className="name-fields">
+  <div className="input-group">
+    <label htmlFor="firstName" className="input-label">First Name</label>
+    <input
+      id="firstName"
+      type="text"
+      placeholder="John"
+      value={firstName}
+      onChange={(e) => setFirstName(e.target.value)}
+      className="form-input"
+    />
+  </div>
+  <div className="input-group">
+    <label htmlFor="lastName" className="input-label">Last Name</label>
+    <input
+      id="lastName"
+      type="text"
+      placeholder="Doe"
+      value={lastName}
+      onChange={(e) => setLastName(e.target.value)}
+      className="form-input"
+    />
+  </div>
+</div>
+        
+        <div className="input-group">
+          <label htmlFor="email" className="input-label">Email Address</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="Vivek@gmail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="form-input"
+          />
+        </div>
+        
+        <div className="input-group">
+          <label htmlFor="message" className="input-label">Your Feedback</label>
+          <textarea
+            id="message"
+            placeholder="Share your thoughts with us..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="form-input form-textarea"
+          />
+        </div>
+        
         <button
-          onClick={handleSubmit}
+          type="submit"
           disabled={loading}
-          className={`w-full p-2 text-white rounded ${loading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'} transition`}
+          className="submit-button"
         >
-          {loading ? 'Submitting...' : 'Submit Feedback'}
+          {loading ? (
+            <>
+              <svg className="spinner" viewBox="0 0 50 50">
+                <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" strokeWidth="5"></circle>
+              </svg>
+              Submitting...
+            </>
+          ) : (
+            'Submit Feedback'
+          )}
         </button>
-      </div>
+      </form>
     </div>
   );
 }
-
-export default FeedbackForm;
