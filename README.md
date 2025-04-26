@@ -17,8 +17,7 @@ A full-stack web application for collecting and managing user feedback, built wi
 
 ## Live Demo
 
-- Frontend: [Netlify Deployment](https://your-netlify-url.netlify.app)
-- Backend: [Render Deployment](https://your-render-server.onrender.com)
+- Frontend: [Netlify Deployment](https://velvety-cheesecake-3412b9.netlify.app/)
 
 ## Technologies Used
 
